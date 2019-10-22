@@ -1,0 +1,120 @@
+---
+output: word_document
+---
+
+## 분석목적 : corrgram패키지에 있는 baseball 데이터를 사용하여 연봉(logSal)을 예측하는 모델을 만들고자 한다. 
+```{r}
+library(corrgram) # baseball데이터를 사용하기 위한 목적
+data(baseball)
+str(baseball)
+
+```
+
+***
+***
+***
+## 단순회귀분석
+```{r}
+# RBI (타점:Runs batted in) 를 사용하여, 연봉을 예측해보세요. 
+summary(lm(logSal ~ RBI, data = baseball))
+
+# 회귀식의 적합여부,  회귀식, 회귀계수, 설명력등의 상세 해석도 기재하세요.
+# p-value: 3.855e-14
+# logSal = 2.2331370 + 0.0066252 * RBI
+```
+
+    
+```{r, fig.width=9, fig.height=9}
+# Years(연차)를 사용하여, 연봉을 예측해보세요. 
+summary(lm(logSal ~ Years, data = baseball))
+
+# 회귀식의 적합여부,  회귀식, 회귀계수, 설명력등의 상세 해석도 기재하세요.
+```
+***
+***
+***
+## 다중회귀분석
+```{r}
+# RBI, Homer,Errors,Assists 4개의 설명 변수를 사용하여, 연봉을 예측해보세요. # 회귀식의 적합여부,  회귀식, 회귀계수, 설명력등의 상세 해석도 기재하세요.
+m <- lm(logSal ~ RBI + Homer + Errors + Assists, data = baseball)
+summary(m)
+
+```
+  
+***
+***
+***
+## 변수 추가에 따른 회귀식의 설명력 비교 
+```{r}
+# RBI+Assists + Hits 3개의 설명 변수를 사용하여 연봉을 예측하고,
+summary(lm(logSal ~ RBI + Assists + Hits, data = baseball))
+# RBI+Assists + Hits + Runs 4개의 설명 변수를 사용하여 연봉을 예측한후
+summary(lm(logSal ~ RBI + Assists + Hits + Runs, data = baseball))
+# 설명변수 추가 따른 회귀식의 설명력에 대해서 논하시오. 
+
+```
+
+```{r}
+names(baseball)
+data <- baseball[-c(1:4)]
+data <- transform(data, BA=Hits/Atbat, BAc=Hitsc/Atbatc)
+
+names(data)
+str(data)
+
+sum(is.na(data))
+sapply(data, function(x)sum(is.na(x)))
+data <- na.omit(data)
+
+cor <- as.data.frame(cor(data))
+plot(cor)
+install.packages('corrplot')
+library(corrplot)
+corrplot(cor)
+```
+
+```{r}
+names(baseball)
+my_baseball <- na.omit(baseball[-c(1:4, 21)])
+names(my_baseball)
+my_baseball <- transform(my_baseball, BA = Hits / Atbat, BAc = Hitsc / Atbatc)
+names(my_baseball)
+my_baseball <- my_baseball[-c(1:2, 8:9)]
+names(my_baseball)
+minmax_scale <- function(x) {
+  (x-min(x))/(max(x)-min(x))
+}
+normalize <- function(x) {
+  (x-mean(x))/(stand)
+}
+
+logSal <- my_baseball$logSal
+my_baseball_sub <- my_baseball%>% select(-logSal)
+result <- lapply(my_baseball_sub, minmax_scale)
+result <- as.data.frame(result)
+summary(result)
+result <- cbind(result, logSal)
+my_norm <- as.data.frame(lapply(my_baseball, normalize))
+colMeans(my_norm)
+```
+
+
+```{r}
+summary(lm(logSal ~ BA + BAc + Runs + Runsc + RBI + RBIc + Putouts + Errors + Years, data = my_norm))  # 0.5351
+summary(lm(logSal ~ BA + BAc + RBI + RBIc + Putouts + Errors + Years, data = data))  # 0.5065
+summary(lm(logSal ~ BA + BAc + Runsc + RBIc + Putouts + Errors + Years, data = data))  # 0.4775
+summary(lm(logSal ~ BA + BAc + Runs + Runsc + Putouts + Errors + Years, data = data))  # 0.5333
+summary(lm(logSal ~ BA + BAc + Runs + RBI + Putouts + Years + Errors, data = data))  # 0.5344
+summary(lm(logSal ~ BA + BAc + Runs + Putouts + Years, data = data))  # 0.5326
+summary(lm(logSal ~ BA + BAc + Runs + Years, data = data))  # 0.5221
+summary(lm(logSal ~ BA + BAc + Runs + Errors + Years, data = data))  # 0.5221
+
+```
+
+
+# Stepwise 변수 선택법
+
+```{r}
+
+```
+
